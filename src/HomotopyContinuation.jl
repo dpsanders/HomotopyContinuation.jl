@@ -39,6 +39,7 @@ module HomotopyContinuation
     include("core_tracker.jl")
     include("path_tracker.jl")
     include("solve.jl")
+    include("presolve.jl")
     include("monodromy.jl")
 
     import LinearAlgebra: issuccess

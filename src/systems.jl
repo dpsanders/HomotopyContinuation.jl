@@ -9,7 +9,8 @@ export AbstractSystem,
     differentiate_parameters!,
     differentiate_parameters,
     evaluate_and_jacobian,
-    evaluate_and_jacobian!
+    evaluate_and_jacobian!,
+    degrees
 
 
 """
@@ -149,6 +150,14 @@ Returns a tuple `(m, n)` indicating that `F` is a system of `m` polynomials `m` 
 Base.size(::AbstractSystem) = error("Mandatory to define `Base.size` for `AbstractSystem`s")
 Base.size(F::AbstractSystem, i::Integer) = size(F)[i]
 Base.length(F::AbstractSystem) = size(F, 1)
+
+"""
+    degrees(F::AbstractSystem)
+
+Returns a vector of the degree of the polynomials. This is necessary to define if you
+want to do a total degree homotopy with affine tracking.
+"""
+degrees(::AbstractSystem) = error("Mandatory to define `degrees` for affine `AbstractSystem`s.")
 
 include("systems/sp_system.jl")
 include("systems/fixed_homotopy.jl")

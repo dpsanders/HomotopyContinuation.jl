@@ -41,6 +41,7 @@ evaluate(F::AbstractSystem, x, c::AbstractSystemCache=cache(F, x))
 jacobian!(u, F::AbstractSystem, args...)
 jacobian(F::AbstractSystem, x, c::AbstractSystemCache=cache(F, x))
 Base.size(::AbstractSystem)
+degrees(::AbstractSystem)
 ```
 
 Additionally if the system should support parameter homotopies it needs to support

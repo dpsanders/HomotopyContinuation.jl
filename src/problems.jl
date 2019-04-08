@@ -40,7 +40,6 @@ function ProjectiveProblem(G::AbstractSystem, F::AbstractSystem,
 end
 
 
-
 """
     AffineProblem(H::AbstractHomotopy, seed::Int)
 
@@ -63,6 +62,9 @@ function AffineProblem(G::AbstractSystem, F::AbstractSystem,
 		homotopy=DEFAULT_HOMOTOPY, kwargs...)
     AffineProblem(homotopy(G, F), vargroups, seed; kwargs...)
 end
+
+replace_homotopy(f, P::AffineProblem) = AffineProblem(f(P.homotopy), P.vargroups, P.seed)
+replace_homotopy(f, P::ProjectiveProblem) = ProjectiveProblem(f(P.homotopy), P.vargroups, P.seed, P.startsolutions_need_reordering)
 
 """
     homvars(prob::AbstractProblem)
@@ -225,27 +227,35 @@ function totaldegree_polysystem(degrees, variables, variable_groups::VariableGro
 	end
 end
 
-function problem_startsolutions(prob::TotalDegreeInput{<:AbstractSystem}, homvaridx::Nothing, seed; system=DEFAULT_SYSTEM, kwargs...)
+function problem_startsolutions(prob::TotalDegreeInput{<:AbstractSystem}, ::Nothing, seed; affine_tracking=false, system=DEFAULT_SYSTEM, kwargs...)
     n, N = size(prob.system)
-	degrees = abstract_system_degrees(prob.system)
-    G = TotalDegreeSystem(degrees)
-	# Check overdetermined case
-	n > N && error(overdetermined_error_msg)
-	variable_groups = VariableGroups(N, homvaridx)
-    (ProjectiveProblem(G, prob.system, variable_groups, seed; kwargs...),
-     totaldegree_solutions(degrees))
+	if affine_tracking
+		degs = degrees(prob.system)
+	else
+		degs = degrees_square_homogenous_system(prob.system)
+	end
+    G = TotalDegreeSystem(degs)
+	variable_groups = VariableGroups(N, nothing)
+
+	if affine_tracking
+		AffineProblem(G, prob.system, variable_groups, seed; kwargs...),
+     	totaldegree_solutions(degrees)
+	else
+    	ProjectiveProblem(G, prob.system, variable_groups, seed; kwargs...),
+     	totaldegree_solutions(degrees)
+	end
 end
 
 function problem_startsolutions(prob::TotalDegreeInput{<:AbstractSystem}, hominfo::HomogenizationInformation, seed; system=DEFAULT_SYSTEM, kwargs...)
     n, N = size(prob.system)
-	degrees = abstract_system_degrees(prob.system)
+	degrees = degrees_square_homogenous_system(prob.system)
     G = TotalDegreeSystem(degrees)
 	variable_groups = VariableGroups(N, hominfo)
     (ProjectiveProblem(G, prob.system, variable_groups, seed; kwargs...),
      totaldegree_solutions(degrees))
 end
 
-function abstract_system_degrees(F)
+function degrees_square_homogenous_system(F::AbstractSystem)
 	n, N = size(F)
 	degrees = check_homogeneous_degrees(F)
 	# system needs to be homogeneous
@@ -305,7 +315,7 @@ end
 # Parameter homotopy
 #####################
 
-function problem_startsolutions(prob::ParameterSystemInput, hominfo, seed; affine_tracking=false, system=SPSystem, kwargs...)
+function problem_startsolutions(prob::ParameterSystemInput{<:MPPolyInputs}, hominfo, seed; affine_tracking=false, system=SPSystem, kwargs...)
 	Prob = affine_tracking ? AffineProblem : ProjectiveProblem
 	if affine_tracking
 		variable_groups = VariableGroups(variables(prob.system; parameters=prob.parameters))
@@ -318,4 +328,38 @@ function problem_startsolutions(prob::ParameterSystemInput, hominfo, seed; affin
 	F̂ = construct_system(F, system; homvars=homvars, variables=vars, parameters=prob.parameters)
 	H = ParameterHomotopy(F̂, p₁=prob.p₁, p₀=prob.p₀, γ₁=prob.γ₁, γ₀=prob.γ₀)
 	Prob(H, variable_groups, seed; startsolutions_need_reordering=!affine_tracking), prob.startsolutions
+end
+
+function problem_startsolutions(prob::ParameterSystemInput{<:AbstractSystem}, hominfo, seed; affine_tracking=false, system=SPSystem, kwargs...)
+	Prob = affine_tracking ? AffineProblem : ProjectiveProblem
+	if affine_tracking
+		variable_groups = VariableGroups(variables(prob.system; parameters=prob.parameters))
+		homvars = nothing
+		F = prob.system
+	else
+		F, variable_groups, homvars = homogenize_if_necessary(prob.system, hominfo; parameters=prob.parameters)
+	end
+	vars = flattened_variable_groups(variable_groups)
+	F̂ = construct_system(F, system; homvars=homvars, variables=vars, parameters=prob.parameters)
+	H = ParameterHomotopy(F̂, p₁=prob.p₁, p₀=prob.p₀, γ₁=prob.γ₁, γ₀=prob.γ₀)
+	Prob(H, variable_groups, seed; startsolutions_need_reordering=!affine_tracking), prob.startsolutions
+
+	n, N = size(prob.system)
+	if affine_tracking
+		degs = degrees(prob.system)
+	else
+		degs = degrees_square_homogenous_system(prob.system)
+	end
+    G = TotalDegreeSystem(degs)
+	variable_groups = VariableGroups(N, nothing)
+
+	H = ParameterHomotopy(prob.system, p₁=prob.p₁, p₀=prob.p₀, γ₁=prob.γ₁, γ₀=prob.γ₀)
+
+	if affine_tracking
+		AffineProblem(H, variable_groups, seed; startsolutions_need_reordering=false),
+     	prob.startsolutions
+	else
+    	ProjectiveProblem(H, variable_groups, seed; startsolutions_need_reordering=false)
+     	prob.startsolutions
+	end
 end
