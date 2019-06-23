@@ -1,4 +1,4 @@
-# Reference
+# Miscellaneous
 
 ## Input
 We support any polynomials which follow the [MultivariatePolynomials](https://github.com/JuliaAlgebra/MultivariatePolynomials.jl)

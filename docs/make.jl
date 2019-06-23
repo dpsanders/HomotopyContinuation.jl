@@ -15,7 +15,7 @@ makedocs(
         "Predictors and correctors" => "predictors-correctors.md",
         "Data structures for polynomial systems" => "systems.md",
         "Norms and distances" => "norms_distances.md",
-        "Reference" => "reference.md"
+        "Miscellaneous" => "miscellaneous.md"
         ],
     strict=true)
 
