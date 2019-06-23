@@ -40,7 +40,6 @@ Result with 2 solutions
 Solve the system `F` using a start system computed from the Newton Polytopes of the entries `F`. The number of paths to track is equal to the mixed volume of the Newton Polytopes of the entries of `F`. The mixed volume is at most the total degree of `F`. `F` can be
 - `Vector{<:MultivariatePolynomials.AbstractPolynomial}` (e.g. constructed by `@polyvar`)
 - A composition of polynomial systems constructed by [`compose`](@ref).
-- [`AbstractSystem`](@ref) (the system has to represent a **homogeneous** polynomial system.)
 
 If `only_torus == true` then only solutions in the algebraic torus ``(ℂ\\setminus \\{0\\})^n`` will be computed.
 
@@ -55,6 +54,7 @@ Result with 2 solutions
 • 0 singular solutions (0 real)
 • 2 paths tracked
 • random seed: 222880
+```
 
 # Homogeneous Systems
 
@@ -82,7 +82,7 @@ This yields the same result as `solve([x^2+y^2+1, 2x+3y-1])`.
 
 # Multihomogeneous Systems
 
-By exploiting the multi-homogenous structure of a polynomial system it is possible
+By exploiting the multi-homogeneous structure of a polynomial system it is possible
 to decrease the number of paths necessary to track.
 ```julia
 @polyvar x y
@@ -152,11 +152,9 @@ solve(F, startsolutions; parameters=a, p₁=p₁, p₀=p₀)
 
 Solve the homotopy `H` by tracking the each solution of
 ``H(⋅, t)`` (as provided by `start_solutions`) from ``t=1`` to ``t=0``.
-Note that `H` has to be a homotopy between *homogeneous* polynomial systems.
-If it should be considered as an affine system indicate which is the index
-of the homogenization variable, e.g. `solve(H, startsolutions, homvar=3)`
+If H is homogenous and if it should be considered as an affine system indicate which is the index
+of the homogenization variable. E.g. `solve(H, startsolutions, homvar=3)`
 if the third variable is the homogenization variable.
-
 
 # Options
 ### General options:
